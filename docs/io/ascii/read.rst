@@ -12,7 +12,10 @@ function::
   >>> data = ascii.read(table)  # doctest: +SKIP
 
 where ``table`` is the name of a file, a string representation of a table, or a
-list of table lines.  By default |read| will try to `guess the table format <#guess-table-format>`_
+list of table lines.  The return value (``data`` in this case) is a :ref:`Table
+<astropy-table>` object.
+
+By default |read| will try to `guess the table format <#guess-table-format>`_
 by trying all the supported formats.  If this does not work (for unusually
 formatted tables) then one needs give `astropy.io.ascii` additional hints about the
 format, for example::
@@ -117,7 +120,7 @@ Parameters for ``read()``
   This converts the raw data tables value into the
   output object that gets returned by |read|.  The default is
   :class:`~astropy.io.ascii.TableOutputter`, which returns a
-  :class:`~astropy.table.Table` object.
+  :class:`~astropy.table.Table` object (see :ref:`Data Tables <astropy-table>`).
 
 **Inputter**: Inputter class
   This is generally not specified.
@@ -257,6 +260,8 @@ with numeric columns but no header row, and in this case ``astropy.io.ascii`` wi
 auto-assign column names because of the restriction on column names that
 look like a number.
 
+Guess order
+"""""""""""
 The order of guessing is shown by this Python code, where ``Reader`` is the
 class which actually implements reading the different file formats::
 
@@ -290,6 +295,9 @@ that would conflict are skipped.  For example the call::
 would only try the four delimiter possibilities, skipping all the conflicting
 Reader and quotechar combinations.
 
+Disabling
+"""""""""
+
 Guessing can be disabled in two ways::
 
   import astropy.io.ascii
@@ -297,6 +305,14 @@ Guessing can be disabled in two ways::
   data = astropy.io.ascii.read(table, guess=False)  # disable for this call
   astropy.io.ascii.set_guess(False)                 # set default to False globally
   data = astropy.io.ascii.read(table)               # guessing disabled
+
+Debugging
+"""""""""
+
+In order to get more insight into the guessing process and possibly debug if
+something isn't working as expected, use the
+`~astropy.io.ascii.get_read_trace()` function.  This returns a traceback of the
+attempted read formats for the last call to `~astropy.io.ascii.read()`.
 
 Comments and metadata
 ^^^^^^^^^^^^^^^^^^^^^

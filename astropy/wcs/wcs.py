@@ -1149,13 +1149,16 @@ reduce these to 2 dimensions using the naxis kwarg.
     all_pix2world.__doc__ = """
         Transforms pixel coordinates to world coordinates.
 
-        Performs all of the following in order:
+        Performs all of the following in series:
 
-            - Detector to image plane correction (optionally)
+            - Detector to image plane correction (if present in the
+              FITS file)
 
-            - `SIP`_ distortion correction (optionally)
+            - `SIP`_ distortion correction (if present in the FITS
+              file)
 
-            - `distortion paper`_ table-lookup correction (optionally)
+            - `distortion paper`_ table-lookup correction (if present
+              in the FITS file)
 
             - `wcslib`_ "core" WCS transformation
 
@@ -2466,18 +2469,21 @@ reduce these to 2 dimensions using the naxis kwarg.
         self.wcs.cd = new_cd
 
     def printwcs(self):
-        print("WCS Keywords\n")
-        print("Number of WCS axes: {0!r}".format(self.naxis))
-        sfmt = ': ' +  "".join(["{"+"{0}".format(i)+"!r}  " for i in range(self.naxis)])
+        print(repr(self))
 
-        s = 'CTYPE ' + sfmt
-        print(s.format(*self.wcs.ctype))
-
-        s = 'CRVAL ' + sfmt
-        print(s.format(*self.wcs.crval))
-
-        s = 'CRPIX ' + sfmt
-        print(s.format(*self.wcs.crpix))
+    def __repr__(self):
+        '''
+        Return a short description. Simply porting the behavior from
+        the `printwcs()` method.
+        '''
+        description = ["WCS Keywords\n",
+                       "Number of WCS axes: {0!r}".format(self.naxis)]
+        sfmt = ' : ' +  "".join(["{"+"{0}".format(i)+"!r}  " for i in range(self.naxis)])
+        
+        keywords = ['CTYPE', 'CRVAL', 'CRPIX']
+        values = [self.wcs.ctype, self.wcs.crval, self.wcs.crpix]
+        for keyword, value in zip(keywords, values):
+            description.append(keyword+sfmt.format(*value))
 
         if hasattr(self.wcs, 'pc'):
             for i in range(self.naxis):
@@ -2485,18 +2491,20 @@ reduce these to 2 dimensions using the naxis kwarg.
                 for j in range(self.naxis):
                     s += ''.join(['PC', str(i+1), '_', str(j+1), ' '])
                 s += sfmt
-                print(s.format(*self.wcs.pc[i]))
-            s = 'CDELT ' + sfmt
-            print(s.format(*self.wcs.cdelt))
+                description.append(s.format(*self.wcs.pc[i]))
+            s = 'CDELT' + sfmt
+            description.append(s.format(*self.wcs.cdelt))
         elif hasattr(self.wcs, 'cd'):
             for i in range(self.naxis):
                 s = ''
                 for j in range(self.naxis):
                     s += "".join(['CD', str(i+1), '_', str(j+1), ' '])
                 s += sfmt
-                print(s.format(*self.wcs.cd[i]))
+                description.append(s.format(*self.wcs.cd[i]))
 
-        print('NAXIS    : {0!r} {1!r}'.format(self._naxis1, self._naxis2))
+        description.append('NAXIS    : {0!r} {1!r}'.format(self._naxis1, 
+                           self._naxis2))
+        return '\n'.join(description)
 
     def get_axis_types(self):
         """

@@ -161,14 +161,20 @@ Starting a new package
    following files into a new directory called ``docs``::
 
     mkdir docs
+    cp -r ../template/docs/_templates docs/
     cp ../template/docs/Makefile docs/
     cp ../template/docs/conf.py docs/
     cp ../template/docs/make.bat docs/
     touch docs/index.rst  # creates empty page
-    git add docs/Makefile docs/conf.py docs/make.bat docs/index.rst
+    git add docs/_templates docs/Makefile docs/conf.py docs/make.bat docs/index.rst
 
    you can later start adding content to ``index.rst`` and other documentation
    files.
+
+#. Add a ``README.md`` file to your repository, describing what the package
+   does, and for example how to install it and any required dependencies::
+
+    git add README.md
 
 #. Finally, if you plan on using Travis for continuous integration, copy over
    the ``.travis.yml`` file and edit it::
@@ -433,7 +439,7 @@ replace ``CHANGES.rst`` by ``CHANGES.md`` in the instructions.
    ``unreleased``, to the current date in ``yyyy-mm-dd`` format.
 
 #. Update the version number in ``setup.py`` to the version you're about to
-   release, without the ``.dev`` suffix (e.g. ``v0.1``).
+   release, without the ``.dev`` suffix (e.g. ``0.1``).
 
 #. Run ``git clean -fxd`` to remove any untracked files (WARNING: this will
    permanently remove any files that have not been previously committed, so
@@ -479,7 +485,7 @@ replace ``CHANGES.rst`` by ``CHANGES.md`` in the instructions.
         git tag v<version>
 
 #. Change ``VERSION`` in ``setup.py`` to next version number, but with a
-   ``.dev`` suffix at the end (e.g. ``v0.2.dev``). Add a new section to
+   ``.dev`` suffix at the end (e.g. ``0.2.dev``). Add a new section to
    ``CHANGES.rst`` for next version, with a single entry ``No changes yet``, e.g.::
 
        0.2 (unreleased)
@@ -501,9 +507,9 @@ replace ``CHANGES.rst`` by ``CHANGES.md`` in the instructions.
         python setup.py register build sdist --format=gztar upload
 
    or, if you are concerned about security, you can also use ``twine`` as described
-    in `these <https://packaging.python.org/en/latest/tutorial.html#uploading-your-project-to-pypi>`_
-    instructions. Either way, check that the entry on PyPI is correct, and that
-    the tarfile is present.
+   in `these <https://packaging.python.org/en/latest/tutorial.html#uploading-your-project-to-pypi>`_
+   instructions. Either way, check that the entry on PyPI is correct, and that
+   the tarfile is present.
 
 #. Go back to the master branch and push your changes to github::
 

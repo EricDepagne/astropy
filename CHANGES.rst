@@ -16,9 +16,23 @@ New Features
 
 - ``astropy.coordinates``
 
+  - Added ``get_constellation`` function and ``SkyCoord.get_constellation``
+    convenience method to determine the constellation that a coordinate
+    is in. [#3758]
+
+  - Added ``PrecessedGeocentric`` frame, which is based on GCRS, but precessed
+    to a specific requested mean equinox. [#3758]
+
 - ``astropy.cosmology``
 
   - Add Planck 2015 cosmology [#3476]
+
+  - Distance calculations in cosmologies with massless (or no) neutrinos
+    are now > 10x faster for the supplied cosmologies. [#3767]
+
+  - ``FLRW._tfunc`` and ``FLRW._xfunc`` are marked as deprecated.  Users
+    should use the new public interfaces ``FLRW.lookback_time_integrand`` 
+    and ``FLRW.abs_distance_integrand`` instead. [#3767]
 
 - ``astropy.io.ascii``
 
@@ -30,7 +44,13 @@ New Features
     arguments ``col_starts`` or ``col_ends``. Columns will be assumed to begin and
     end immediately adjacent to each other. [#3657]
 
+  - Add a function ``get_read_trace()`` that returns a traceback of the
+    attempted read formats for the last call to ``astropy.io.ascii.read``. [#3688]
+
 - ``astropy.io.fits``
+
+  - Support reading and writing from bzip2 compressed files. i.e. ``.fits.bz2``
+    files. [#3789]
 
 - ``astropy.io.misc``
 
@@ -48,7 +68,26 @@ New Features
 
 - ``astropy.nddata``
 
+  - Added ``block_reduce`` and ``block_replicate`` functions. [#3453]
+
+  - ``extract_array`` now offers different options to deal with array
+    boundaries [#3727]
+
 - ``astropy.stats``
+
+  - Added ``sigma_lower`` and ``sigma_upper`` keywords to
+    ``sigma_clip`` to allow for unsymmetric clipping. [#3595]
+
+  - Added ``cenfunc``, ``stdfunc``, and ``axis`` keywords to
+    ``sigma_clipped_stats``. [#3792]
+  - Added the ``histogram`` routine, which is similar to ``np.histogram`` but
+    includes several additional options for automatic determination of optimal
+    histogram bins. Associated helper routines include ``bayesian_blocks``,
+    ``friedman_bin_width``, ``scott_bin_width``, and ``knuth_bin_width``.
+    This functionality was ported from the astroML_ library. [#3756]
+
+  - Added the ``bayesian_blocks`` routine, which implements a dynamic algorithm
+    for locating change-points in various time series. [#3756]
 
 - ``astropy.table``
 
@@ -56,23 +95,42 @@ New Features
     option to rename new column(s) rather than raise exception when its name
     already exists. [#3592]
 
+  - Added ``Table.to_pandas`` and ``Table.from_pandas`` for converting to/from
+    pandas dataframes. [#3504]
+
+  - Initializing a ``Table`` with ``Column`` objects no longer requires
+    that the column ``name`` attribute be defined. [#3781]
+
 - ``astropy.tests``
 
 - ``astropy.time``
 
   - Add support for FITS standard time strings. [#3547]
 
+  - Allow the ``format`` attribute to be updated in place to change the
+    default representation of a ``Time`` object. [#3673]
+
 - ``astropy.units``
 
   - Added furlong to imperial units. [#3529]
+  - Added mil to imperial units. [#3716]
 
 - ``astropy.utils``
 
 - ``astropy.visualization``
 
+  - Added the ``hist`` function, which is similar to ``plt.hist`` but
+    includes several additional options for automatic determination of optimal
+    histogram bins. This functionality was ported from the astroML_ library.
+    [#3756]
+
 - ``astropy.vo``
 
 - ``astropy.wcs``
+
+  - Enhanced text representation of ``WCS`` objects. [#3604]
+
+.. _astroML: http://astroML.org
 
 API changes
 ^^^^^^^^^^^
@@ -110,6 +168,13 @@ API changes
 - ``astropy.nddata``
 
 - ``astropy.stats``
+
+  - Renamed the ``sigma_clip`` ``sig`` keyword as ``sigma``. [#3595]
+
+  - Changed the ``sigma_clip`` ``varfunc`` keyword to ``stdfunc``. [#3595]
+
+  - Renamed the ``sigma_clipped_stats`` ``mask_val`` keyword to
+    ``mask_value``. [#3595]
 
 - ``astropy.table``
 
@@ -194,132 +259,85 @@ Other Changes and Additions
 New Features
 ^^^^^^^^^^^^
 
-- ``astropy.config``
-
-- ``astropy.constants``
-
-- ``astropy.convolution``
-
-- ``astropy.coordinates``
-
-- ``astropy.cosmology``
-
-- ``astropy.io.ascii``
-
-- ``astropy.io.fits``
-
-- ``astropy.io.misc``
-
-- ``astropy.io.registry``
-
-- ``astropy.io.votable``
-
-- ``astropy.modeling``
-
-- ``astropy.nddata``
-
-- ``astropy.stats``
-
-- ``astropy.sphinx``
-
 - ``astropy.table``
+
+  - Greatly improved the speed of printing a large table to the screen when
+    only a few rows are being displayed. [#3796]
 
 - ``astropy.time``
 
-- ``astropy.units``
-
-- ``astropy.utils``
-
-- ``astropy.vo``
-
-- ``astropy.wcs``
-
-API Changes
-^^^^^^^^^^^
-
-- ``astropy.config``
-
-- ``astropy.constants``
-
-- ``astropy.convolution``
-
-- ``astropy.coordinates``
-
-- ``astropy.cosmology``
-
-- ``astropy.io.ascii``
-
-- ``astropy.io.fits``
-
-- ``astropy.io.misc``
-
-- ``astropy.io.registry``
-
-- ``astropy.io.votable``
-
-- ``astropy.modeling``
-
-- ``astropy.nddata``
-
-- ``astropy.stats``
-
-- ``astropy.table``
-
-- ``astropy.time``
-
-- ``astropy.units``
-
-- ``astropy.utils``
-
-- ``astropy.vo``
-
-- ``astropy.wcs``
+  - Add support for the 2015-Jun-30 leap second. [#3794]
 
 Bug Fixes
 ^^^^^^^^^
 
-- ``astropy.config``
-
-- ``astropy.constants``
-
 - ``astropy.convolution``
+
+  - Fix issue with repeated normalizations of ``Kernels``. [#3747]
 
 - ``astropy.coordinates``
 
-- ``astropy.cosmology``
+  - Fixed ``get_sun`` to yield frames with the ``obstime`` set to what's passed into the function (previously it incorrectly always had J2000). [#3750]
 
-- ``astropy.io.ascii``
+  - Fixed ``get_sun`` to account for aberration of light. [#3750]
+
+  - Fixed error in the GCRS->ICRS transformation that gave incorrect distances. [#3750]
 
 - ``astropy.io.fits``
 
-- ``astropy.io.misc``
-
-- ``astropy.io.registry``
-
-- ``astropy.io.votable``
+  - Fixes to support the upcoming Numpy 1.10. [#3419]
 
 - ``astropy.modeling``
 
-- ``astropy.nddata``
+  - Polynomials are now scaled when used in a compound model. [#3702]
 
-- ``astropy.stats``
+  - Fixed the ``Ellipse2D`` model to be consistent with ``Disk2D`` in
+    how pixels are included. [#3736]
 
-- ``astropy.table``
+  - Fixed crash when evaluating a model that accepts no inputs. [#3772]
 
-- ``astropy.time``
+- ``astropy.testing``
+
+  - The Astropy py.test plugins that disable unintential internet access
+    in tests were also blocking use of local UNIX sockets in tests, which
+    prevented testing some multiprocessing code--fixed. [#3713]
 
 - ``astropy.units``
 
-- ``astropy.utils``
+  - Supported full SI prefixes for the barn unit ("picobarn", "femtobarn",
+    etc.)  [#3753]
 
-- ``astropy.vo``
+  - Fix loss of precision when multiplying non-whole-numbered powers
+    of units together.  For example, before this change, ``(u.m **
+    1.5) ** Fraction(4, 5)`` resulted in an inaccurate floating-point
+    power of ``1.2000000000000002``.  After this change, the exact
+    rational number of ``Fraction(6, 5)`` is maintained. [#3790]
 
-- ``astropy.wcs``
+  - Fixed printing of object ndarrays containing multiple Quantity
+    objects with differing / incompatible units. Note: Unit conversion errors
+    now cause a ``UnitConversionError`` exception to be raised.  However, this
+    is a subclass of the ``UnitsError`` exception used previously, so existing
+    code that catches ``UnitsError`` should still work. [#3778]
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Nothing changed yet.
+- Added a new ``astropy.__bibtex__`` attribute which gives a citation
+  for Astropy in bibtex format. [#3697]
+
+- The bundled version of ERFA was updated to v1.2.0 to address leapscond
+  updates. [#3802]
+
+
+0.4.6 (2015-05-29)
+------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- ``astropy.time``
+
+    - Fixed ERFA code to handle the 2015-Jun-30 leap second. [#3795]
 
 
 1.0.2 (2015-04-16)
@@ -389,8 +407,6 @@ Bug Fixes
     - a zero-length array is the same as passing ``None``
     - a scalar raises a ``ValueError``
     - a one-dimensional array is treated as a single row of a table.
-
-- ``astropy.time``
 
   - Ensure a ``Column`` without units is treated as an ``array``, not as an
     dimensionless ``Quantity``. [#3648]

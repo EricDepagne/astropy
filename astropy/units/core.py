@@ -21,14 +21,14 @@ from ..utils.decorators import lazyproperty, deprecated
 from ..utils.exceptions import AstropyWarning
 from ..utils.misc import isiterable, InheritDocstrings
 from .utils import (is_effectively_unity, sanitize_scale, validate_power,
-                    add_powers)
+                    resolve_fractions)
 from . import format as unit_format
 
 # TODO: Support functional units, e.g. log(x), ln(x)
 
 __all__ = [
-    'UnitsError', 'UnitsWarning', 'UnitBase', 'NamedUnit',
-    'IrreducibleUnit', 'Unit', 'def_unit', 'CompositeUnit',
+    'UnitsError', 'UnitsWarning', 'UnitConversionError', 'UnitBase',
+    'NamedUnit', 'IrreducibleUnit', 'Unit', 'def_unit', 'CompositeUnit',
     'PrefixUnit', 'UnrecognizedUnit', 'get_current_unit_registry',
     'set_enabled_units', 'add_enabled_units',
     'set_enabled_equivalencies', 'add_enabled_equivalencies',
@@ -365,6 +365,7 @@ def add_enabled_units(units):
       m            | irreducible     | meter                 ,
       mi           | 1609.34 m       | mile                  ,
       micron       | 1e-06 m         |                       ,
+      mil          | 2.54e-05 m      | thou                  ,
       nmi          | 1852 m          | nauticalmile, NM      ,
       pc           | 3.08568e+16 m   | parsec                ,
       solRad       | 6.95508e+08 m   | R_sun, Rsun           ,
@@ -448,6 +449,13 @@ class UnitScaleError(UnitsError, ValueError):
     which are not recognized by FITS format.
     """
     pass
+
+
+class UnitConversionError(UnitsError, ValueError):
+    """
+    Used specifically for errors related to converting between units or
+    interpreting units in terms of other units.
+    """
 
 
 # Maintain error in old location for backward compatibility
@@ -836,7 +844,7 @@ class UnitBase(object):
         unit_str = get_err_str(orig_unit)
         other_str = get_err_str(orig_other)
 
-        raise UnitsError(
+        raise UnitConversionError(
             "{0} and {1} are not convertible".format(
                 unit_str, other_str))
 
@@ -909,7 +917,7 @@ class UnitBase(object):
                in zip(self_decomposed.bases, other_decomposed.bases))):
             return self_decomposed.scale / other_decomposed.scale
 
-        raise UnitsError(
+        raise UnitConversionError(
             "'{0!r}' is not a scaled version of '{1!r}'".format(self, other))
 
     def to(self, other, value=1.0, equivalencies=[]):
@@ -1635,7 +1643,7 @@ class IrreducibleUnit(NamedUnit):
                         return CompositeUnit(scale, [base], [1],
                                              _error_check=False)
 
-            raise UnitsError(
+            raise UnitConversionError(
                 "Unit {0} can not be decomposed into the requested "
                 "bases".format(self))
 
@@ -2024,7 +2032,8 @@ class CompositeUnit(UnitBase):
                         break
 
             if unit in new_parts:
-                new_parts[unit] = add_powers(new_parts[unit], power)
+                a, b = resolve_fractions(new_parts[unit], power)
+                new_parts[unit] = a + b
             else:
                 new_parts[unit] = power
             return scale
@@ -2045,7 +2054,8 @@ class CompositeUnit(UnitBase):
                     # needed for the corner case of mag=-0.4*dex
                     scale *= cmath.exp(p * cmath.log(b._scale))
                 for b_sub, p_sub in zip(b._bases, b._powers):
-                    scale = add_unit(b_sub, p_sub * p, scale)
+                    a, b = resolve_fractions(p_sub, p)
+                    scale = add_unit(b_sub, a * b, scale)
             else:
                 scale = add_unit(b, p, scale)
 

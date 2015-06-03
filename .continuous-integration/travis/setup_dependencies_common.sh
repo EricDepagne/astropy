@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # CONDA
 conda create --yes -n test -c astropy-ci-extras python=$PYTHON_VERSION pip
@@ -17,20 +17,26 @@ then
   exit  # no more dependencies needed
 fi
 
+# CORE DEPENDENCIES
+conda install --yes pytest Cython jinja2 psutil
+
 # NUMPY
-conda install --yes numpy=$NUMPY_VERSION
+if [[ $NUMPY_VERSION == dev ]]
+then
+  pip install git+http://github.com/numpy/numpy.git
+  export CONDA_INSTALL="conda install --yes python=$PYTHON_VERSION"
+else
+  conda install --yes numpy=$NUMPY_VERSION
+  export CONDA_INSTALL="conda install --yes python=$PYTHON_VERSION numpy=$NUMPY_VERSION"
+fi
 
 # Now set up shortcut to conda install command to make sure the Python and Numpy
 # versions are always explicitly specified.
-export CONDA_INSTALL="conda install --yes python=$PYTHON_VERSION numpy=$NUMPY_VERSION"
-
-# CORE DEPENDENCIES
-$CONDA_INSTALL pytest Cython jinja2 psutil
 
 # OPTIONAL DEPENDENCIES
 if $OPTIONAL_DEPS
 then
-  $CONDA_INSTALL scipy h5py matplotlib pyyaml
+  $CONDA_INSTALL scipy h5py matplotlib pyyaml scikit-image pandas
   pip install beautifulsoup4
 fi
 
